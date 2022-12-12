@@ -1,0 +1,34 @@
+{
+  "users": [
+    {
+      "id": "guyong",
+      "name": "Gu Yong",
+      "password": "guyong123"
+    },
+    {
+      "id": "wxd",
+      "name": "王晓东",
+      "password": "202cb962ac59075b964b07152d234b70"
+    },
+    {
+      "id": "wxd1",
+      "email": "1924118115@qq.com",
+      "name": "王晓东",
+      "password": "202cb962ac59075b964b07152d234b70",
+      "sex": "男",
+      "phone": "18970557344",
+      "address": "江西省南昌市江西财经大学麦庐园校区"
+    }
+  ],
+  "config": {
+    "sitename": "WeNote",
+    "theme": "daytime",
+    "lang": "zh-cn"
+  },
+  "notes": [
+    {
+      "id": "0000",
+      "title": "untitled"
+    }
+  ]
+}
