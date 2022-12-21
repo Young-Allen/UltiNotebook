@@ -67,16 +67,15 @@ export default {
   methods: {
     onSubmit (values) {
       axios({
-        url: " https://db-api.amarea.cn/users",
+        url: " http://localhost:3000/users",
         method: "GET",
       }).then(res => {
-        console.log(res.data);
         res.data.forEach((item) => {
           if (item.id === values.username && item.password === md5(values.password)) {
             this.$router.push({
               path: "/home",
               query: {
-                name: values.username
+                userInfo: values.username
               }
             })
           } else {

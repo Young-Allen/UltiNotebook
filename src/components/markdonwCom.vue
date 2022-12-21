@@ -1,18 +1,21 @@
 <template>
-  <mavon-editor :value=cellid
-                :toolbars=toolbars
+  <mavon-editor :toolbars=toolbars
                 :subfield="false"
                 :ishljs="true"
-                @save="$save" />
+                :autofocus="false"
+                v-model="newContent"
+                @save="$save"
+                @change="$change" />
 </template>
 
 <script>
+
 export default {
-  props: ['id', 'price', 'intro'],
+  props: ['id', 'content'],
   data () {
     return {
       cellid: this.id,
-      value: "",
+      newContent: this.content,
       toolbars: {
         bold: true, // 粗体
         italic: true, // 斜体
@@ -23,26 +26,26 @@ export default {
         quote: true, // 引用
         ol: true, // 有序列表
         ul: true, // 无序列表
-        link: true, // 链接
         code: true, // code
-        table: true, // 表格
         fullscreen: true, // 全屏编辑
         readmodel: true, // 沉浸式阅读
-        /* 1.3.5 */
-        undo: true, // 上一步
-        redo: true, // 下一步
         trash: true, // 清空
         save: true, // 保存（触发events中的save事件）
-        /* 1.4.2 */
         navigation: true, // 导航目录
-        /* 2.1.8 */
         preview: true, // 预览
       }
     }
   },
   methods: {
     $save (value, render) {
-      this.$emit('getContent', value, render) // 子向父
+      this.$emit('getContent', this.cellid, value, render) // 子向父
+      this.saveContent()
+    },
+    $change (value, render) {
+      console.log(value);
+    },
+    saveContent () {
+      return this.newContent
     }
   }
 };

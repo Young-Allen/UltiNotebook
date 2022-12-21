@@ -1,4 +1,4 @@
-# login
+# UltiNotebook
 
 ## Project setup
 ```

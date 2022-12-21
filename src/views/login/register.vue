@@ -116,7 +116,8 @@ export default {
           password: md5(values.password),
           sex: this.sex,
           phone: values.phone,
-          address: values.address
+          address: values.address,
+          noteList: [],
         }
       }).then(res => {
         this.$router.push({
