@@ -5,6 +5,7 @@ import Login from '@/views/login/login.vue'
 import Register from '@/views/login/register.vue'
 import Home from '@/views/Home/index.vue'
 import Info from '@/views/login/info.vue'
+import changePwd from "@/views/login/changePwd.vue"
 
 Vue.use(VueRouter)
 const routes = [{
@@ -22,6 +23,10 @@ const routes = [{
     {
         path: '/info',
         component: Info,
+    }, {
+        path: '/changePwd',
+        name: "changePwd",
+        component: changePwd,
     }, {
         path: '/home',
         component: Home,

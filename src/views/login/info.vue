@@ -1,30 +1,100 @@
 <template>
-  <div class="info">
+  <div class="login">
     <div class="container">
-      <h3>登录</h3>
-      <p>1. 未输入时会进行提示</p>
-      <p>2. 用户名或密码错误时会进行错误校验并提示</p>
-      <h3>注册</h3>
-      <p>1.表单为空时，会进行提示</p>
-      <p>2.当两次密码不一样时，会提示密码不一致</p>
-      <p>3.当用户名存在时，会提示用户名已存在</p>
-      <p>4.密码采用md5加密存储在数据库中</p>
-      <p>5.注册成功时，自动跳转登录界面，并填充好用户名</p>
-      <span>
-        <router-link to="/login">返回</router-link>
+      <div class="tit">忘记密码</div>
+      <van-form @submit="onSubmit">
+        <van-field v-model="username"
+                   name="username"
+                   label="用户名"
+                   placeholder="用户名"
+                   :error-message="errMsg.username"
+                   :rules="usernameRules" />
+        <van-field v-model="email"
+                   type="text"
+                   name="email"
+                   label="电子邮件:"
+                   placeholder="请输入电子邮件"
+                   :error-message="errMsg.email"
+                   :rules="[
+                        { required: true, message: '请输入电子邮件' },
+                        { pattern: /^[a-z0-9]+([._\\-]*[a-z0-9])*@([a-z0-9]+[-a-z0-9]*[a-z0-9]+.){1,63}[a-z0-9]+$/ , message: '邮箱格式错误'}]" />
+
+        <div style="margin: 16px;">
+          <van-button round
+                      block
+                      type="primary"
+                      native-type="submit">
+            提交
+          </van-button>
+        </div>
+      </van-form>
+      <span class="help">
+        <router-link to="/login">返回登录</router-link>
       </span>
     </div>
   </div>
 </template>
 
 <script>
-export default {
+import axios from 'axios'
 
+export default {
+  created () {
+    this.username = this.$route.query.name
+  },
+  data () {
+    return {
+      username: "",
+      email: "",
+      errMsg: {
+        username: '',
+        email: '',
+      },
+      usernameRules: [{
+        required: true,
+        message: '请输入用户名',
+        trigger: 'onBlur'
+      }],
+    }
+  },
+  methods: {
+    onSubmit (values) {
+      axios({
+        url: "https://db-api.amarea.cn/users",
+        method: "GET",
+      }).then(res => {
+        let code = 1;
+        for (let i = 0; i < 3; i++) {
+          code = (code * 10) + Math.round(Math.random() * 10)
+        }
+        res.data.forEach((item) => {
+          if (item.id === values.username && item.email === values.email) {
+            this.$alert('验证码为: ' + code, '验证成功', {
+              callback: action => {
+                this.$router.push({
+                  name: "changePwd",
+                  params: {
+                    code: code,
+                    username: values.username
+                  }
+                })
+              }
+            });
+          } else {
+            this.$alert('用户名或邮箱错误', '验证失败', {
+              callback: action => {
+              }
+            });
+          }
+        });
+      })
+    },
+  },
 }
 </script>
 
 <style scoped>
-.info {
+.login {
   height: 100vh;
   /*弹性布局居中*/
   display: flex;
@@ -88,6 +158,10 @@ export default {
 .container a {
   color: plum;
   text-decoration: none;
+}
+.help {
+  margin-top: 10px;
+  font-size: large;
 }
 @keyframes square {
   0% {

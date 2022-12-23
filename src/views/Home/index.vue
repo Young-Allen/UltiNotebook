@@ -14,6 +14,13 @@
                @node-click="handleNodeClick"
                ref="tree">
       </el-tree>
+
+      <div class="delnote"
+           @click="delNote()">
+        <img src="@/assets/delete.png"
+             width="30px"
+             height="30px" />
+      </div>
     </el-aside>
 
     <el-container>
@@ -28,11 +35,37 @@
             <i class="el-icon-setting"></i>
           </el-button>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item>字体大小</el-dropdown-item>
-            <el-dropdown-item>主体模式</el-dropdown-item>
+            <el-dropdown-item>
+              <el-button type="text"
+                         @click="dialogVisible1 = true">个人信息</el-button>
+            </el-dropdown-item>
+            <el-dropdown-item>
+              <el-button type="text"
+                         @click="dialogVisible = true">字体大小</el-button>
+            </el-dropdown-item>
+            <el-dropdown-item>
+              <el-button type="text"
+                         @click="logout()">退出登录</el-button>
+            </el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </el-header>
+
+      <el-dialog title="设置字体大小"
+                 :visible.sync="dialogVisible"
+                 width="30%">
+        <div class="block">
+          <el-slider v-model="mdfontSize"
+                     show-input>
+          </el-slider>
+        </div>
+      </el-dialog>
+
+      <el-dialog title="设置个人信息"
+                 :visible.sync="dialogVisible1"
+                 width="50%">
+        <reg :userId="userId"></reg>
+      </el-dialog>
 
       <el-main style="padding: 0px">
         <!-- 主体部分 -->
@@ -64,7 +97,7 @@
               <button title="新建"
                       @click="newNote()"><img src="@/assets/newfile.png" /></button>
               <button title="保存"
-                      @click="saveNote()"><img src="@/assets/save.png" /></button>
+                      @click="saveContent()"><img src="@/assets/save.png" /></button>
             </div>
           </div>
 
@@ -96,7 +129,14 @@
           <div class="detail">创建时间：<span class="createTime">{{createTime}}</span></div>
           <div class="detail">作者：<span class="author">{{userInfo.name}}</span></div>
           <div class="detail">备注：
-            <div class="remarks">单击此处，输入备注信息</div>
+            <div class="remarks"
+                 @click="isShowRemarks = false"
+                 v-show="isShowRemarks">{{ remarks }}</div>
+            <el-input type="textarea"
+                      v-model="remarks"
+                      v-show="!isShowRemarks"
+                      style="min-height: 100px;"
+                      @blur="saveRemarks()"></el-input>
           </div>
         </div>
       </el-main>
@@ -108,58 +148,56 @@
 import { v4 as uuidv4 } from 'uuid'
 import axios from 'axios'
 import Vue from "vue"
-import markdonwComVue from '@/components/markdonwCom.vue';
+import reg from "@/components/changeinfo.vue"
 
 export default {
   created () {
     axios({
-      url: "http://localhost:3000/users/" + this.$route.query.userInfo,
+      url: "https://db-api.amarea.cn/users/" + this.$route.query.userInfo,
       method: "GET",
     }).then(res => {
       this.userInfo = res.data
       this.noteList = res.data.noteList;
-      this.noteList.forEach(element => {
-        this.titleList.push({ "label": element.title })
-      });
+      this.userId = this.$route.query.userInfo,
+        this.noteList.forEach(element => {
+          this.titleList.push({ "label": element.title })
+        });
     })
-  },
-  components: {
-    "markdonwComVue": markdonwComVue
   },
   watch: {
     filterText (val) {
       this.$refs.tree.filter(val);
     }
   },
+  components: {
+    "reg": reg,
+  },
+  computed: {
+    markdownFontSize () {
+      return this.mdfontSize + "px"
+    }
+  },
   data () {
     return {
+      dialogVisible1: false,
+      dialogVisible: false,
       filterText: '',
       isShow: false,
       isShowTitle: true,
+      isShowRemarks: true,
       noteId: "",
       currentCellId: "",
       userInfo: "",
+      userId: "",
       noteList: [],
       cellList: [],
       titleList: [],
       noteTitle: "",
       createTime: "",
-      markdownFontSize: "25px",
+      remarks: "",
+      mdfontSize: 25,
       toolbars: {
-        bold: true, // 粗体
-        italic: true, // 斜体
-        header: true, // 标题
-        underline: true, // 下划线
-        strikethrough: true, // 中划线
-        mark: true, // 标记
-        quote: true, // 引用
-        ol: true, // 有序列表
-        ul: true, // 无序列表
-        code: true, // code
         fullscreen: true, // 全屏编辑
-        readmodel: true, // 沉浸式阅读
-        trash: true, // 清空
-        save: true, // 保存（触发events中的save事件）
         preview: true, // 预览
       },
       defaultProps: {
@@ -173,7 +211,6 @@ export default {
       if (!value) return true;
       return data.label.indexOf(value) !== -1;
     },
-    //点击选择笔记
     handleNodeClick (data) {
       this.noteList.forEach(note => {
         if (note.title === data.label) {
@@ -181,13 +218,14 @@ export default {
           this.noteTitle = note.title
           this.noteId = note.id
           this.createTime = note.createTime
+          this.remarks = note.remarks
         }
       })
     },
     $save (value, render) {
       this.cellList[this.currentCellId].cellContent = value
       axios({
-        url: "http://localhost:3000/users/" + this.userInfo.id,
+        url: "https://db-api.amarea.cn/users/" + this.userInfo.id,
         method: "PATCH",
         data: {
           noteList: this.noteList,
@@ -197,7 +235,7 @@ export default {
     },
     saveContent () {
       axios({
-        url: "http://localhost:3000/users/" + this.userInfo.id,
+        url: "https://db-api.amarea.cn/users/" + this.userInfo.id,
         method: "PATCH",
         data: {
           noteList: this.noteList,
@@ -210,6 +248,15 @@ export default {
       this.noteList.find(item => {
         if (item.id === this.noteId) {
           item.title = this.noteTitle
+        }
+      })
+      this.saveContent()
+    },
+    saveRemarks () {
+      this.isShowRemarks = true
+      this.noteList.find(item => {
+        if (item.id === this.noteId) {
+          item.remarks = this.remarks
         }
       })
       this.saveContent()
@@ -265,7 +312,9 @@ export default {
           "cellContent": ""
         }],
       })
+      let temp = []
       this.noteList.forEach(note => {
+        temp.push({ "label": note.title })
         if (note.id === id) {
           that.cellList = note.cellList
           that.noteTitle = note.title
@@ -273,20 +322,8 @@ export default {
           that.createTime = note.createTime
         }
       });
+      this.titleList = temp
       this.saveContent()
-    },
-    saveNote () {
-      console.log(this.cellList);
-      // let markdownBox = this.$refs.markdownBox
-      // for (let i = 0; i < markdownBox.length; i++) {
-      //   this.cellList[i].valueContent = markdownBox[i].saveContent()
-      // }
-      // console.log(this.cellList);
-      // this.cellList.sort(this.compare("cellId"))
-      // console.log(this.cellList);
-      // let index = this.noteList.find(item => item.id === this.noteId)
-      // this.noteList[index.id].cellList = this.cellList
-      // this.userInfo.noteList = this.noteList
     },
     getCurrentTime () {
       //获取当前时间并打印
@@ -299,12 +336,62 @@ export default {
       let ss = new Date().getSeconds() < 10 ? '0' + new Date().getSeconds() : new Date().getSeconds();
       _this.gettime = yy + '年' + mm + '月' + dd + '日 ' + hh + ':' + mf + ':' + ss;
       return _this.gettime
-    }
+    },
+    delNote () {
+      this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        if (this.noteId != "") {
+          this.noteList.splice(this.noteList.findIndex(item => item.id === this.noteId), 1)
+          this.saveContent()
+
+          let temp = []
+          this.noteList.forEach(item => {
+            temp.push({ "label": item.title })
+          })
+          this.titleList = temp
+          this.cellList = []
+          this.noteTitle = ""
+          this.cellId = ""
+          this.createTime = ""
+
+          this.$message({
+            type: 'success',
+            message: '删除成功!'
+          });
+        }
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        });
+      });
+    },
+    logout () {
+      this.$router.push({
+        path: "/login",
+        query: {
+          userInfo: ""
+        }
+      })
+    },
   }
 };
 </script>
 
 <style>
+.delnote {
+  position: absolute;
+  width: 250px;
+  background-color: rgb(255, 255, 255);
+  text-align: center;
+  bottom: 0px;
+}
+.delnote:hover {
+  background-color: rgb(157, 157, 158);
+}
 body {
   margin: 0;
   -moz-user-select: none;
@@ -319,7 +406,7 @@ body {
   user-select: none;
   /*选中文字时避免出现蓝色背景*/
 }
-.el-tree-node__content {
+.el-tree-node .el-tree-node__content {
   height: 40px;
 }
 .selectCellBorder {

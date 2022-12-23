@@ -1,34 +1,38 @@
 <template>
   <div class="login">
     <div class="container">
-      <div class="tit">登录</div>
+      <div class="tit">修改密码</div>
       <van-form @submit="onSubmit">
-        <van-field v-model="username"
-                   name="username"
-                   label="用户名"
-                   placeholder="用户名"
-                   :error-message="errMsg.username"
+        <van-field v-model="code"
+                   name="code"
+                   label="验证码"
+                   placeholder="验证码"
+                   :error-message="errMsg.code"
                    :rules="usernameRules" />
         <van-field v-model="password"
                    type="password"
                    name="password"
-                   label="密码"
+                   label="密码:"
                    placeholder="密码"
-                   :error-message="errMsg.password"
-                   :rules="passwordRules" />
+                   :rules="[{ required: true, message: '请填写密码' }]" />
+        <van-field v-model="comfirmPassword"
+                   type="password"
+                   name="comfirmPassword"
+                   label="确认密码:"
+                   placeholder="确认密码"
+                   :rules="[{ validator, message: '与第一次密码不一致' }]" />
 
         <div style="margin: 16px;">
           <van-button round
                       block
                       type="primary"
                       native-type="submit">
-            登录
+            提交
           </van-button>
         </div>
       </van-form>
-      <span>没有账号？<router-link to="/register">去注册</router-link></span>
       <span class="help">
-        <router-link to="/info">找回密码</router-link>
+        <router-link to="/login">返回登录</router-link>
       </span>
     </div>
   </div>
@@ -44,43 +48,47 @@ export default {
   },
   data () {
     return {
-      username: "",
+      code: "",
       password: "",
+      comfirmPassword: "",
       errMsg: {
-        password: '',
-        username: '',
+        code: '',
       },
       usernameRules: [{
         required: true,
-        message: '请输入用户名',
+        message: '请输入验证码',
         trigger: 'onBlur'
       }],
-      passwordRules: [{
-        required: true,
-        message: '请输入密码',
-        trigger: 'onBlur'
-      }]
     }
   },
   methods: {
+    validator () {
+      if (this.password === this.comfirmPassword) return true
+      else return false
+    },
     onSubmit (values) {
-      axios({
-        url: "https://db-api.amarea.cn/users",
-        method: "GET",
-      }).then(res => {
-        res.data.forEach((item) => {
-          if (item.id === values.username && item.password === md5(values.password)) {
-            this.$router.push({
-              path: "/home",
-              query: {
-                userInfo: values.username
-              }
-            })
-          } else {
-            this.errMsg.password = '用户名或密码错误'
+      if (values.code == this.$route.params.code) {
+        axios({
+          url: "https://db-api.amarea.cn/users/" + this.$route.params.username,
+          method: "PATCH",
+          data: {
+            password: md5(values.password),
+          }
+        }).then(res => {
+          this.$alert('修改成功', '成功', {
+            callback: action => {
+              this.$router.push({
+                path: "/login",
+              })
+            }
+          });
+        })
+      } else {
+        this.$alert('验证码错误', '验证失败', {
+          callback: action => {
           }
         });
-      })
+      }
     },
   },
 }
